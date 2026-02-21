@@ -2,169 +2,468 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gemini 金融工具箱 - 旗舰部署版</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>沪金算盘 - 全球资产看板</title>
     <style>
-        :root { --primary: #007aff; --success: #34c759; --danger: #ff3b30; --gold: #d4af37; --bg: #f2f2f7; }
-        body { font-family: -apple-system, sans-serif; background: var(--bg); display: flex; justify-content: center; padding: 10px; margin: 0; }
-        .card { width: 100%; max-width: 600px; background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.08); }
-        .nav { display: flex; overflow-x: auto; gap: 8px; margin-bottom: 20px; padding-bottom: 8px; border-bottom: 1px solid #e5e5ea; scrollbar-width: none; }
-        .nav button { padding: 8px 18px; border: none; background: #e5e5ea; border-radius: 12px; cursor: pointer; white-space: nowrap; font-size: 13px; font-weight: 600; }
-        .nav button.active { background: var(--primary); color: white; }
-        .panel { display: none; }
-        .panel.active { display: block; animation: slideIn 0.3s ease; }
-        .group { margin-bottom: 15px; }
-        label { display: block; font-size: 12px; font-weight: bold; margin-bottom: 6px; color: #8e8e93; }
-        input, select { width: 100%; padding: 12px; border: 1px solid #d1d1d6; border-radius: 10px; box-sizing: border-box; font-size: 16px; }
-        button.run { width: 100%; padding: 15px; background: var(--primary); color: white; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; margin-top: 10px; }
-        .res { margin-top: 20px; padding: 15px; background: #f8f9ff; border-radius: 12px; border: 1px solid #eef0f7; font-size: 14px; line-height: 1.8; }
-        .bank-tag { display: inline-block; padding: 2px 8px; background: #eee; border-radius: 4px; font-size: 11px; margin-right: 5px; cursor: pointer; }
-        @keyframes slideIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        :root {
+            --primary: #007aff;
+            --up: #ff3b30;
+            --down: #34c759;
+            --gold: #d4af37;
+            --card-bg: #ffffff;
+            --bg: #f2f2f7;
+            --text-main: #1c1c1e;
+            --text-sub: #8e8e93;
+            --border: #e5e5ea;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 500px;
+            padding: 16px;
+            box-sizing: border-box;
+            min-height: 100vh;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+            padding: 8px 4px;
+        }
+        .header-left h1 { font-size: 28px; margin: 0; font-weight: 800; letter-spacing: -1px; }
+        .header-left p { font-size: 13px; color: var(--text-sub); margin: 4px 0 0; font-weight: 500; }
+        
+        /* 世界时钟样式 */
+        .world-clock-bar {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(10px);
+            padding: 12px;
+            border-radius: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .clock-item { text-align: center; border-right: 1px solid var(--border); }
+        .clock-item:last-child { border-right: none; }
+        .clock-city { font-size: 10px; color: var(--text-sub); font-weight: 700; margin-bottom: 4px; display: block; }
+        .clock-time { font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums; display: block; }
+        .clock-status { font-size: 9px; margin-top: 2px; display: inline-block; padding: 2px 6px; border-radius: 4px; background: #eee; color: #666; font-weight: 600; }
+        .clock-status.active { background: rgba(52, 199, 89, 0.15); color: var(--down); }
+
+        .hero-card {
+            background: linear-gradient(165deg, #1c1c1e 0%, #3a3a3c 100%);
+            color: #fff;
+            padding: 24px;
+            border-radius: 32px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 16px;
+        }
+        .hero-card h3 { margin: 0; font-size: 13px; opacity: 0.5; text-transform: uppercase; letter-spacing: 1.5px; }
+        .hero-card .price { font-size: 48px; font-weight: 800; margin: 12px 0; font-variant-numeric: tabular-nums; }
+        .hero-card .change-row { display: flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 600; }
+
+        .fx-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 24px;
+        }
+        .fx-item {
+            background: var(--card-bg);
+            padding: 12px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+            cursor: pointer;
+            transition: transform 0.2s, background-color 0.2s;
+            user-select: none;
+        }
+        .fx-item:active { transform: scale(0.95); background-color: #f9f9f9; }
+        .fx-item label { display: block; font-size: 10px; color: var(--text-sub); font-weight: 700; margin-bottom: 4px; }
+        .fx-item span { font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+        .watchlist {
+            background: var(--card-bg);
+            border-radius: 32px;
+            padding: 12px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.04);
+            margin-bottom: 20px;
+        }
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 12px 8px;
+        }
+        .section-header h3 { margin: 0; font-size: 18px; font-weight: 700; }
+        
+        .stock-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 12px;
+            border-radius: 20px;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        .stock-item:active { background: #f2f2f7; }
+        .stock-info .name { font-weight: 700; font-size: 16px; display: block; }
+        .stock-info .code { font-size: 10px; color: var(--text-sub); text-transform: uppercase; font-weight: 600; }
+        .stock-price { text-align: right; }
+        .price-now { font-weight: 700; font-size: 16px; display: block; }
+        .price-pct { 
+            font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 8px; 
+            color: #fff; margin-top: 4px; display: inline-block; min-width: 55px;
+        }
+
+        .bg-up { background-color: var(--up); }
+        .bg-down { background-color: var(--down); }
+
+        .profit-tag { font-size: 10px; margin-top: 2px; font-weight: 600; }
+
+        .controls { display: flex; gap: 8px; padding: 0 4px; margin-top: 12px; }
+        input {
+            flex: 1; height: 46px; border-radius: 14px; border: 1px solid var(--border);
+            padding: 0 16px; background: #fff; font-size: 14px; outline: none;
+        }
+        .add-btn {
+            background: var(--primary); color: #fff; border: none;
+            width: 46px; height: 46px; border-radius: 14px; font-size: 20px; cursor: pointer;
+        }
+
+        .modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.4); z-index: 1000; align-items: center; justify-content: center;
+            backdrop-filter: blur(8px);
+        }
+        .modal-content { background: #fff; padding: 24px; border-radius: 30px; width: 80%; max-width: 300px; }
+        .modal-btns { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
+        .modal-btns button { height: 44px; border-radius: 12px; border: none; font-weight: 600; cursor: pointer; }
+
+        footer { text-align: center; padding: 30px 20px; font-size: 11px; color: var(--text-sub); line-height: 1.6; }
     </style>
 </head>
 <body>
 
-<div class="card">
-    <div class="nav">
-        <button class="active" onclick="tab('savings')">储蓄利率</button>
-        <button onclick="tab('invest')">投资定投</button>
-        <button onclick="tab('stock')">股票美股</button>
-        <button onclick="tab('sh')">上海社保</button>
-        <button onclick="tab('loan')">房贷公积金</button>
-    </div>
-
-    <div id="savings" class="panel active">
-        <div class="group"><label>本金 (元)</label><input type="number" id="sav_p" value="100000" onchange="save(this)"></div>
-        <div class="group">
-            <label>快速填入年利率 (%)</label>
-            <span class="bank-tag" onclick="setRate(1.25)">国有大行(1.25%)</span>
-            <span class="bank-tag" onclick="setRate(1.85)">股份行(1.85%)</span>
-            <span class="bank-tag" onclick="setRate(2.3)">城商行(2.3%)</span>
+<div class="app-container">
+    <header>
+        <div class="header-left">
+            <h1 id="current-date">--月--日</h1>
+            <p>沪金算盘 · 全球视野</p>
         </div>
-        <div class="group"><label>自定义年利率 (%)</label><input type="number" id="sav_r" value="1.25" step="0.05" onchange="save(this)"></div>
-        <div class="group"><label>期限 (年)</label><input type="number" id="sav_y" value="3" onchange="save(this)"></div>
-        <button class="run" onclick="calcSavings()">计算到期利息</button>
-        <div id="res_sav" class="res"></div>
-    </div>
-
-    <div id="invest" class="panel">
-        <div class="group"><label>每月定投 (元)</label><input type="number" id="i_m" value="2000" onchange="save(this)"></div>
-        <div class="group"><label>预期年化 (%)</label><input type="number" id="i_r" value="8" onchange="save(this)"></div>
-        <div class="group"><label>年限</label><input type="number" id="i_y" value="10" onchange="save(this)"></div>
-        <button class="run" onclick="calcInvest()">财富增长测算</button>
-        <canvas id="investChart"></canvas>
-        <div id="res_i" class="res"></div>
-    </div>
-
-    <div id="stock" class="panel">
-        <div class="group">
-            <label>市场</label>
-            <select id="s_t" onchange="save(this)"><option value="A">A股</option><option value="US">美股</option></select>
+        <div class="status-box">
+            <div id="status" class="status-dot online">实时已连接</div>
+            <div id="update-time" style="font-size: 10px; color: var(--text-sub); margin-top: 2px;">--:--:--</div>
         </div>
-        <div class="group"><label>买入价</label><input type="number" id="s_p" value="10" onchange="save(this)"></div>
-        <div class="group"><label>数量</label><input type="number" id="s_n" value="1000" onchange="save(this)"></div>
-        <button class="run" onclick="calcStock()">计算保本价</button>
-        <div id="res_s" class="res"></div>
-    </div>
+    </header>
 
-    <div id="sh" class="panel">
-        <div class="group"><label>上海税前月薪</label><input type="number" id="sh_s" value="15000" onchange="save(this)"></div>
-        <button class="run" onclick="calcSH()">计算到手工资</button>
-        <hr style="border:0.5px solid #eee; margin:20px 0;">
-        <div class="group"><label>实物金买入价/现价</label>
-            <input type="number" id="g_b" placeholder="买入单价" onchange="save(this)">
-            <input type="number" id="g_n" placeholder="当前金价" value="550" style="margin-top:10px">
+    <!-- 世界时钟模块 -->
+    <div class="world-clock-bar">
+        <div class="clock-item">
+            <span class="clock-city">北京</span>
+            <span class="clock-time" id="time-beijing">--:--</span>
+            <span class="clock-status" id="status-beijing">休市</span>
         </div>
-        <button class="run" style="background:var(--gold)" onclick="calcGold()">黄金盈亏测算</button>
-        <div id="res_mix" class="res"></div>
+        <div class="clock-item">
+            <span class="clock-city">伦敦</span>
+            <span class="clock-time" id="time-london">--:--</span>
+            <span class="clock-status" id="status-london">休市</span>
+        </div>
+        <div class="clock-item">
+            <span class="clock-city">纽约</span>
+            <span class="clock-time" id="time-newyork">--:--</span>
+            <span class="clock-status" id="status-newyork">休市</span>
+        </div>
     </div>
 
-    <div id="loan" class="panel">
-        <div class="group"><label>贷款金额 (万)</label><input type="number" id="l_p" value="100" onchange="save(this)"></div>
-        <div class="group"><label>年利率 (%)</label><input type="number" id="l_r" value="3.1" onchange="save(this)"></div>
-        <button class="run" onclick="calcLoan()">等额本息月供</button>
-        <div id="res_l" class="res"></div>
+    <div class="hero-card">
+        <h3>上海金 AU9999 (RMB/g)</h3>
+        <div id="gold-price" class="price">---.--</div>
+        <div class="change-row">
+            <span id="gold-change-val">--</span>
+            <span id="gold-change-pct">--%</span>
+        </div>
+    </div>
+
+    <div class="fx-grid" id="fx-matrix">
+        <div class="fx-item" data-code="fx_susdcnh" onclick="toggleFx(this)">
+            <label id="label-usdcnh">USD/CNH</label><span id="val-usdcnh">加载中</span>
+        </div>
+        <div class="fx-item" data-code="fx_seurcnh" onclick="toggleFx(this)">
+            <label id="label-eurcnh">EUR/CNH</label><span id="val-eurcnh">加载中</span>
+        </div>
+        <div class="fx-item" data-code="fx_sjpycnh" onclick="toggleFx(this)">
+            <label id="label-jpycnh">JPY/CNH</label><span id="val-jpycnh">加载中</span>
+        </div>
+        <div class="fx-item" data-code="fx_sgbpcnh" onclick="toggleFx(this)">
+            <label id="label-gbpcnh">GBP/CNH</label><span id="val-gbpcnh">加载中</span>
+        </div>
+        <div class="fx-item" data-code="fx_shkdcnh" onclick="toggleFx(this)">
+            <label id="label-hkdcnh">HKD/CNH</label><span id="val-hkdcnh">加载中</span>
+        </div>
+        <div class="fx-item" data-code="fx_sxauusd" onclick="toggleFx(this)">
+            <label id="label-xauusd">XAU/USD</label><span id="val-xauusd">加载中</span>
+        </div>
+    </div>
+
+    <div class="watchlist">
+        <div class="section-header">
+            <h3>自选资产</h3>
+        </div>
+        <div id="stock-list"></div>
+        <div class="controls">
+            <input type="text" id="new-code" placeholder="输入代码 (如: 600519)">
+            <button class="add-btn" onclick="addNewStock()">+</button>
+        </div>
+    </div>
+
+    <footer>
+        <br>
+        <br>
+        数据每 10s 自动更新 · 点击汇率对调<br>
+        沪金算盘 V2.2 · 全球资产监控
+    </footer>
+</div>
+
+<div id="stock-modal" class="modal">
+    <div class="modal-content">
+        <h3 id="modal-title" style="margin-top:0">管理资产</h3>
+        <div style="margin-bottom:12px">
+            <label style="font-size:11px;color:var(--text-sub)">成本价</label>
+            <input type="number" id="input-cost" style="width:100%;box-sizing:border-box;margin-top:4px">
+        </div>
+        <div style="margin-bottom:12px">
+            <label style="font-size:11px;color:var(--text-sub)">持仓量</label>
+            <input type="number" id="input-hold" style="width:100%;box-sizing:border-box;margin-top:4px">
+        </div>
+        <div class="modal-btns">
+            <button onclick="saveHoldings()" style="background:var(--primary);color:#fff">保存设置</button>
+            <button onclick="deleteStock()" style="background:#fff;color:var(--up);border:1px solid var(--up)">删除资产</button>
+            <button onclick="closeModal()" style="background:#f2f2f7;color:var(--text-main)">取消</button>
+        </div>
     </div>
 </div>
 
 <script>
-    function tab(id) {
-        document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-        document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
-        document.getElementById(id).classList.add('active');
-        event.currentTarget.classList.add('active');
-    }
-
-    // 本地记忆
-    function save(el) { localStorage.setItem(el.id, el.value); }
-    window.onload = () => {
-        document.querySelectorAll('input, select').forEach(el => {
-            if(localStorage.getItem(el.id)) el.value = localStorage.getItem(el.id);
-        });
+    const STORAGE_KEY = 'HJSP_GLOBAL_DATA';
+    let appData = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {
+        codes: ['sh000001', 'hk00700', 'gb_aapl'],
+        holdings: {}
     };
 
-    // 储蓄计算
-    function setRate(r) { document.getElementById('sav_r').value = r; }
-    function calcSavings() {
-        const p = document.getElementById('sav_p').value, r = document.getElementById('sav_r').value / 100, y = document.getElementById('sav_y').value;
-        const interest = p * r * y;
-        document.getElementById('res_sav').innerHTML = `到期利息: <b style="color:var(--success)">￥${interest.toLocaleString()}</b><br>到期本息合计: ￥${(parseFloat(p) + interest).toLocaleString()}`;
-    }
+    let fxReverseState = {
+        fx_susdcnh: false, fx_seurcnh: false, fx_sjpycnh: false,
+        fx_sgbpcnh: false, fx_shkdcnh: false, fx_sxauusd: false
+    };
 
-    // 定投计算与图表
-    let chart = null;
-    function calcInvest() {
-        const m = parseFloat(document.getElementById('i_m').value), r = document.getElementById('i_r').value/1200, n = document.getElementById('i_y').value * 12;
-        let total = 0, pts = [], prin = [];
-        for(let i=1; i<=n; i++) {
-            total = (total + m) * (1 + r);
-            if(i%12===0) { pts.push(total.toFixed(0)); prin.push(m*i); }
-        }
-        document.getElementById('res_i').innerHTML = `最终市值: <b style="color:var(--primary)">￥${total.toLocaleString(undefined,{maximumFractionDigits:0})}</b><br>累计投入: ￥${(m*n).toLocaleString()}`;
+    const FX_CODES = ['fx_susdcnh', 'fx_seurcnh', 'fx_sjpycnh', 'fx_sgbpcnh', 'fx_shkdcnh', 'fx_sxauusd'];
+    const SPECIAL = ['gds_AU9999'];
+    let currentDataMap = {};
+    let currentEditingCode = null;
+
+    // 更新世界时钟逻辑
+    function updateWorldClocks() {
+        const now = new Date();
         
-        const ctx = document.getElementById('investChart').getContext('2d');
-        if(chart) chart.destroy();
-        chart = new Chart(ctx, {
-            type: 'line',
-            data: { labels: Array.from({length: pts.length}, (_,i)=>i+1+'年'), datasets: [{label:'预期市值',data:pts,borderColor:'#007aff',fill:true},{label:'本金',data:prin,borderColor:'#8e8e93',borderDash:[5,5]}] }
+        const config = [
+            { id: 'beijing', timezone: 'Asia/Shanghai', market: 'A股', open: 930, close: 1500 },
+            { id: 'london', timezone: 'Europe/London', market: '伦敦', open: 800, close: 1630 },
+            { id: 'newyork', timezone: 'America/New_York', market: '美股', open: 930, close: 1600 }
+        ];
+
+        config.forEach(city => {
+            const timeStr = now.toLocaleTimeString('zh-CN', { timeZone: city.timezone, hour12: false, hour: '2-digit', minute: '2-digit' });
+            document.getElementById(`time-${city.id}`).innerText = timeStr;
+            
+            // 简单判断状态 (不包含节假日)
+            const [h, m] = timeStr.split(':').map(Number);
+            const totalMin = h * 100 + m;
+            const statusEl = document.getElementById(`status-${city.id}`);
+            const isWeekend = [0, 6].includes(new Date(now.toLocaleString('en-US', {timeZone: city.timezone})).getDay());
+            
+            if (!isWeekend && totalMin >= city.open && totalMin <= city.close) {
+                statusEl.innerText = '交易中';
+                statusEl.classList.add('active');
+            } else {
+                statusEl.innerText = '休市';
+                statusEl.classList.remove('active');
+            }
         });
     }
 
-    // 股票计算
-    function calcStock() {
-        const type = document.getElementById('s_t').value, p = parseFloat(document.getElementById('s_p').value), n = document.getElementById('s_n').value;
-        let fee = 0, bk = 0;
-        if(type==='A') {
-            const cost = p * n;
-            fee = Math.max(5, cost * 0.00025);
-            bk = (cost + fee*2 + cost*0.0005) / n;
-        } else {
-            fee = Math.max(1, n * 0.005);
-            bk = (p * n + fee*2) / n;
+    const d = new Date();
+    document.getElementById('current-date').innerText = `${d.getMonth()+1}月${d.getDate()}日`;
+
+    function fetchSinaData(codes) {
+        return new Promise((resolve) => {
+            const iframe = document.createElement('iframe');
+            iframe.style.display = 'none';
+            iframe.srcdoc = `
+                <meta name="referrer" content="no-referrer">
+                <script src="https://hq.sinajs.cn/list=${codes.join(',')}"><\/script>
+                <script>
+                    window.parent.postMessage({
+                        type: 'SINA_DATA',
+                        data: Array.from(Object.keys(window)).filter(k => k.startsWith('hq_str_')).reduce((obj, k) => {
+                            obj[k.replace('hq_str_', '')] = window[k]; return obj;
+                        }, {})
+                    }, '*');
+                <\/script>
+            `;
+            const onMsg = (e) => { 
+                if (e.data?.type === 'SINA_DATA') { 
+                    window.removeEventListener('message', onMsg); 
+                    if(iframe.parentNode) document.body.removeChild(iframe); 
+                    resolve(e.data.data); 
+                } 
+            };
+            window.addEventListener('message', onMsg);
+            document.body.appendChild(iframe);
+            setTimeout(() => { 
+                window.removeEventListener('message', onMsg); 
+                if(iframe.parentNode) document.body.removeChild(iframe); 
+                resolve(null); 
+            }, 8000);
+        });
+    }
+
+    async function refresh() {
+        updateWorldClocks();
+        const data = await fetchSinaData([...FX_CODES, ...SPECIAL, ...appData.codes]);
+        if (!data) return;
+        currentDataMap = data;
+        document.getElementById('update-time').innerText = new Date().toLocaleTimeString();
+
+        const au = data['gds_AU9999']?.split(',');
+        if(au && au.length > 1) {
+            const p = parseFloat(au[0]), c = parseFloat(au[7]);
+            document.getElementById('gold-price').innerText = p.toFixed(2);
+            document.getElementById('gold-change-val').innerText = (p-c > 0 ? '+' : '') + (p-c).toFixed(2);
+            document.getElementById('gold-change-pct').innerText = (p-c > 0 ? '+' : '') + ((p-c)/c*100).toFixed(2) + '%';
         }
-        document.getElementById('res_s').innerHTML = `<b style="color:var(--danger)">保本卖出价: ${bk.toFixed(3)}</b><br>预估买入税费: ${fee.toFixed(2)}`;
+
+        updateFxUI();
+        renderList(data);
     }
 
-    // 上海社保
-    function calcSH() {
-        const s = document.getElementById('sh_s').value, base = Math.min(Math.max(s, 7384), 36921);
-        const social = base * 0.105 + s * 0.07;
-        const tax = Math.max(0, (s - social - 5000) * 0.03);
-        document.getElementById('res_mix').innerHTML = `上海税后到手: <b style="color:var(--success)">￥${(s-social-tax).toFixed(2)}</b>`;
+    function updateFxUI() {
+        FX_CODES.forEach(code => {
+            const raw = currentDataMap[code];
+            if(!raw) return;
+            const p = raw.split(',');
+            const valId = 'val-' + code.split('_s')[1];
+            const labId = 'label-' + code.split('_s')[1];
+            const originalPrice = parseFloat(p[1]);
+            const isReverse = fxReverseState[code];
+            let displayPrice, displayLabel;
+            const pair = code.split('_s')[1].toUpperCase();
+            const base = pair.substring(0, 3);
+            const target = pair.substring(3);
+            if (isReverse) {
+                displayPrice = (1 / originalPrice).toFixed(target === 'JPY' ? 6 : 4);
+                displayLabel = `${target}/${base}`;
+            } else {
+                displayPrice = originalPrice.toFixed(target === 'XAUUSD' ? 2 : 4);
+                displayLabel = `${base}/${target}`;
+            }
+            document.getElementById(valId).innerText = displayPrice;
+            document.getElementById(labId).innerText = displayLabel;
+        });
     }
 
-    function calcGold() {
-        const diff = (document.getElementById('g_n').value - document.getElementById('g_b').value);
-        document.getElementById('res_mix').innerHTML = `金价每克盈亏: <b style="color:${diff>=0?'var(--danger)':'var(--success)'}">￥${diff.toFixed(2)}</b>`;
+    window.toggleFx = function(el) {
+        const code = el.getAttribute('data-code');
+        fxReverseState[code] = !fxReverseState[code];
+        updateFxUI();
+    };
+
+    function renderList(data) {
+        const list = document.getElementById('stock-list');
+        list.innerHTML = '';
+        appData.codes.forEach(code => {
+            const raw = data[code]; if(!raw) return;
+            const p = raw.split(',');
+            let name, price, lastClose;
+            if (code.startsWith('sh000') || code.startsWith('sz399')) { name=p[0]; price=p[1]; lastClose=p[2]; }
+            else if (code.startsWith('hk')) { name=p[1]; price=p[6]; lastClose=p[3]; }
+            else if (code.startsWith('gb_')) { name=p[0]; price=p[1]; lastClose=p[26]; }
+            else { name=p[0]; price=p[3]; lastClose=p[2]; }
+            const curP = parseFloat(price), lastP = parseFloat(lastClose);
+            const isUp = curP >= lastP;
+            const pct = ((curP - lastP)/lastP*100).toFixed(2);
+            let profitHtml = '';
+            const hold = appData.holdings[code];
+            if(hold && hold.cost) {
+                const profit = (curP - hold.cost) * hold.count;
+                profitHtml = `<span class="profit-tag" style="color:${profit>=0?'var(--up)':'var(--down)'}">盈亏: ${profit>=0?'+':''}${profit.toFixed(2)}</span>`;
+            }
+            const item = document.createElement('div');
+            item.className = 'stock-item';
+            item.onclick = () => openModal(code, name);
+            item.innerHTML = `
+                <div class="stock-info">
+                    <span class="name">${name}</span>
+                    <span class="code">${code}</span>
+                    ${profitHtml}
+                </div>
+                <div class="stock-price">
+                    <span class="price-now">${curP.toFixed(2)}</span>
+                    <span class="price-pct ${isUp?'bg-up':'bg-down'}">${isUp?'+':''}${pct}%</span>
+                </div>
+            `;
+            list.appendChild(item);
+        });
     }
 
-    // 房贷
-    function calcLoan() {
-        const p = document.getElementById('l_p').value * 10000, r = document.getElementById('l_r').value/1200, n = 360;
-        const m = (p * r * Math.pow(1+r, n)) / (Math.pow(1+r, n) - 1);
-        document.getElementById('res_l').innerHTML = `30年等额本息月供: <b>￥${m.toFixed(2)}</b>`;
+    function openModal(code, name) {
+        currentEditingCode = code;
+        document.getElementById('modal-title').innerText = name;
+        const hold = appData.holdings[code] || {cost:'', count:''};
+        document.getElementById('input-cost').value = hold.cost;
+        document.getElementById('input-hold').value = hold.count;
+        document.getElementById('stock-modal').style.display = 'flex';
     }
+    function closeModal() { document.getElementById('stock-modal').style.display = 'none'; }
+    function saveHoldings() {
+        const cost = parseFloat(document.getElementById('input-cost').value);
+        const count = parseFloat(document.getElementById('input-hold').value);
+        if(!isNaN(cost)) appData.holdings[currentEditingCode] = {cost, count};
+        save(); closeModal(); refresh();
+    }
+    function deleteStock() {
+        appData.codes = appData.codes.filter(c => c !== currentEditingCode);
+        delete appData.holdings[currentEditingCode];
+        save(); closeModal(); refresh();
+    }
+    function addNewStock() {
+        let code = document.getElementById('new-code').value.trim().toLowerCase();
+        if(!code) return;
+        if(!isNaN(code)) code = (code.startsWith('6')||code.startsWith('9')) ? 'sh'+code : (code.length===5?'hk'+code:'sz'+code);
+        if(!appData.codes.includes(code)) { appData.codes.push(code); save(); refresh(); }
+        document.getElementById('new-code').value = '';
+    }
+    function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(appData)); }
+
+    refresh();
+    setInterval(refresh, 10000);
+    // 时钟秒级更新（UI流畅度）
+    setInterval(updateWorldClocks, 60000);
 </script>
 </body>
 </html>
