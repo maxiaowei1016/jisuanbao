@@ -45,23 +45,25 @@
         .header-left h1 { font-size: 28px; margin: 0; font-weight: 800; letter-spacing: -1px; }
         .header-left p { font-size: 13px; color: var(--text-sub); margin: 4px 0 0; font-weight: 500; }
         
-        /* 世界时钟样式 */
+        /* 世界时钟样式增强 */
         .world-clock-bar {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 10px;
             background: rgba(255, 255, 255, 0.6);
             backdrop-filter: blur(10px);
-            padding: 12px;
-            border-radius: 20px;
+            padding: 14px 10px;
+            border-radius: 24px;
             margin-bottom: 20px;
             border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.02);
         }
         .clock-item { text-align: center; border-right: 1px solid var(--border); }
         .clock-item:last-child { border-right: none; }
-        .clock-city { font-size: 10px; color: var(--text-sub); font-weight: 700; margin-bottom: 4px; display: block; }
-        .clock-time { font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums; display: block; }
-        .clock-status { font-size: 9px; margin-top: 2px; display: inline-block; padding: 2px 6px; border-radius: 4px; background: #eee; color: #666; font-weight: 600; }
+        .clock-city { font-size: 11px; color: var(--text-sub); font-weight: 700; margin-bottom: 2px; display: block; }
+        .clock-time { font-size: 16px; font-weight: 800; font-variant-numeric: tabular-nums; display: block; color: var(--text-main); }
+        .clock-date { font-size: 10px; color: var(--text-sub); display: block; margin-top: 1px; }
+        .clock-status { font-size: 9px; margin-top: 5px; display: inline-block; padding: 2px 6px; border-radius: 4px; background: #eee; color: #666; font-weight: 600; }
         .clock-status.active { background: rgba(52, 199, 89, 0.15); color: var(--down); }
 
         .hero-card {
@@ -157,6 +159,7 @@
         .modal-btns button { height: 44px; border-radius: 12px; border: none; font-weight: 600; cursor: pointer; }
 
         footer { text-align: center; padding: 30px 20px; font-size: 11px; color: var(--text-sub); line-height: 1.6; }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #34c759; display: inline-block; margin-right: 4px; }
     </style>
 </head>
 <body>
@@ -167,8 +170,8 @@
             <h1 id="current-date">--月--日</h1>
             <p>沪金算盘 · 全球视野</p>
         </div>
-        <div class="status-box">
-            <div id="status" class="status-dot online">实时已连接</div>
+        <div class="status-box" style="text-align: right;">
+            <div id="status"><span class="status-dot"></span><span style="font-size: 12px; font-weight: 600;">实时行情</span></div>
             <div id="update-time" style="font-size: 10px; color: var(--text-sub); margin-top: 2px;">--:--:--</div>
         </div>
     </header>
@@ -178,22 +181,25 @@
         <div class="clock-item">
             <span class="clock-city">北京</span>
             <span class="clock-time" id="time-beijing">--:--</span>
+            <span class="clock-date" id="date-beijing">--/--</span>
             <span class="clock-status" id="status-beijing">休市</span>
         </div>
         <div class="clock-item">
             <span class="clock-city">伦敦</span>
             <span class="clock-time" id="time-london">--:--</span>
+            <span class="clock-date" id="date-london">--/--</span>
             <span class="clock-status" id="status-london">休市</span>
         </div>
         <div class="clock-item">
             <span class="clock-city">纽约</span>
             <span class="clock-time" id="time-newyork">--:--</span>
+            <span class="clock-date" id="date-newyork">--/--</span>
             <span class="clock-status" id="status-newyork">休市</span>
         </div>
     </div>
 
     <div class="hero-card">
-        <h3>上海金 AU9999 (RMB/g)</h3>
+        <h3>上海金 AU9999 (元/克)</h3>
         <div id="gold-price" class="price">---.--</div>
         <div class="change-row">
             <span id="gold-change-val">--</span>
@@ -203,22 +209,22 @@
 
     <div class="fx-grid" id="fx-matrix">
         <div class="fx-item" data-code="fx_susdcnh" onclick="toggleFx(this)">
-            <label id="label-usdcnh">USD/CNH</label><span id="val-usdcnh">加载中</span>
+            <label id="label-usdcnh">USD/CNH</label><span id="val-usdcnh">...</span>
         </div>
         <div class="fx-item" data-code="fx_seurcnh" onclick="toggleFx(this)">
-            <label id="label-eurcnh">EUR/CNH</label><span id="val-eurcnh">加载中</span>
+            <label id="label-eurcnh">EUR/CNH</label><span id="val-eurcnh">...</span>
         </div>
         <div class="fx-item" data-code="fx_sjpycnh" onclick="toggleFx(this)">
-            <label id="label-jpycnh">JPY/CNH</label><span id="val-jpycnh">加载中</span>
+            <label id="label-jpycnh">JPY/CNH</label><span id="val-jpycnh">...</span>
         </div>
         <div class="fx-item" data-code="fx_sgbpcnh" onclick="toggleFx(this)">
-            <label id="label-gbpcnh">GBP/CNH</label><span id="val-gbpcnh">加载中</span>
+            <label id="label-gbpcnh">GBP/CNH</label><span id="val-gbpcnh">...</span>
         </div>
         <div class="fx-item" data-code="fx_shkdcnh" onclick="toggleFx(this)">
-            <label id="label-hkdcnh">HKD/CNH</label><span id="val-hkdcnh">加载中</span>
+            <label id="label-hkdcnh">HKD/CNH</label><span id="val-hkdcnh">...</span>
         </div>
         <div class="fx-item" data-code="fx_sxauusd" onclick="toggleFx(this)">
-            <label id="label-xauusd">XAU/USD</label><span id="val-xauusd">加载中</span>
+            <label id="label-xauusd">XAU/USD</label><span id="val-xauusd">...</span>
         </div>
     </div>
 
@@ -228,16 +234,15 @@
         </div>
         <div id="stock-list"></div>
         <div class="controls">
-            <input type="text" id="new-code" placeholder="输入代码 (如: 600519)">
+            <input type="text" id="new-code" placeholder="代码(如: 600519)">
             <button class="add-btn" onclick="addNewStock()">+</button>
         </div>
     </div>
 
     <footer>
         <br>
-        <br>
-        数据每 10s 自动更新 · 点击汇率对调<br>
-        沪金算盘 V2.2 · 全球资产监控
+        国内新浪源行情 · 10s 自动轮询<br>
+        沪金算盘专业版 · 投资伴侣
     </footer>
 </div>
 
@@ -261,7 +266,7 @@
 </div>
 
 <script>
-    const STORAGE_KEY = 'HJSP_GLOBAL_DATA';
+    const STORAGE_KEY = 'HJSP_GLOBAL_V3';
     let appData = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {
         codes: ['sh000001', 'hk00700', 'gb_aapl'],
         holdings: {}
@@ -277,10 +282,9 @@
     let currentDataMap = {};
     let currentEditingCode = null;
 
-    // 更新世界时钟逻辑
+    // 更新世界时钟逻辑（包含日期）
     function updateWorldClocks() {
         const now = new Date();
-        
         const config = [
             { id: 'beijing', timezone: 'Asia/Shanghai', market: 'A股', open: 930, close: 1500 },
             { id: 'london', timezone: 'Europe/London', market: '伦敦', open: 800, close: 1630 },
@@ -288,10 +292,12 @@
         ];
 
         config.forEach(city => {
+            const dateStr = now.toLocaleDateString('zh-CN', { timeZone: city.timezone, month: 'numeric', day: 'numeric' });
             const timeStr = now.toLocaleTimeString('zh-CN', { timeZone: city.timezone, hour12: false, hour: '2-digit', minute: '2-digit' });
-            document.getElementById(`time-${city.id}`).innerText = timeStr;
             
-            // 简单判断状态 (不包含节假日)
+            document.getElementById(`time-${city.id}`).innerText = timeStr;
+            document.getElementById(`date-${city.id}`).innerText = dateStr + '日';
+            
             const [h, m] = timeStr.split(':').map(Number);
             const totalMin = h * 100 + m;
             const statusEl = document.getElementById(`status-${city.id}`);
@@ -310,10 +316,12 @@
     const d = new Date();
     document.getElementById('current-date').innerText = `${d.getMonth()+1}月${d.getDate()}日`;
 
+    // 核心行情抓取（增强版新浪源）
     function fetchSinaData(codes) {
         return new Promise((resolve) => {
             const iframe = document.createElement('iframe');
             iframe.style.display = 'none';
+            // 采用动态脚本加载，确保国内网络穿透力
             iframe.srcdoc = `
                 <meta name="referrer" content="no-referrer">
                 <script src="https://hq.sinajs.cn/list=${codes.join(',')}"><\/script>
@@ -350,6 +358,7 @@
         currentDataMap = data;
         document.getElementById('update-time').innerText = new Date().toLocaleTimeString();
 
+        // 黄金 AU9999 解析
         const au = data['gds_AU9999']?.split(',');
         if(au && au.length > 1) {
             const p = parseFloat(au[0]), c = parseFloat(au[7]);
@@ -362,28 +371,40 @@
         renderList(data);
     }
 
+    // 汇率UI更新（处理国内API返回结构）
     function updateFxUI() {
         FX_CODES.forEach(code => {
             const raw = currentDataMap[code];
             if(!raw) return;
             const p = raw.split(',');
-            const valId = 'val-' + code.split('_s')[1];
-            const labId = 'label-' + code.split('_s')[1];
-            const originalPrice = parseFloat(p[1]);
+            // 国内新浪外汇接口索引1通常是中间价/现价
+            let originalPrice = parseFloat(p[1]);
+            // 特殊情况：如果是全球黄金 XAU/USD，解析结构可能不同
+            if (code === 'fx_sxauusd') originalPrice = parseFloat(p[2]);
+            if (isNaN(originalPrice) || originalPrice === 0) originalPrice = parseFloat(p[8]); // 备用索引
+
+            const suffix = code.includes('_s') ? code.split('_s')[1] : code.split('fx_')[1];
+            const valId = 'val-' + suffix;
+            const labId = 'label-' + suffix;
+            
             const isReverse = fxReverseState[code];
             let displayPrice, displayLabel;
-            const pair = code.split('_s')[1].toUpperCase();
+            const pair = suffix.toUpperCase();
             const base = pair.substring(0, 3);
             const target = pair.substring(3);
+
             if (isReverse) {
                 displayPrice = (1 / originalPrice).toFixed(target === 'JPY' ? 6 : 4);
                 displayLabel = `${target}/${base}`;
             } else {
-                displayPrice = originalPrice.toFixed(target === 'XAUUSD' ? 2 : 4);
+                displayPrice = originalPrice.toFixed(pair === 'XAUUSD' ? 2 : 4);
                 displayLabel = `${base}/${target}`;
             }
-            document.getElementById(valId).innerText = displayPrice;
-            document.getElementById(labId).innerText = displayLabel;
+            
+            const vEl = document.getElementById(valId);
+            const lEl = document.getElementById(labId);
+            if(vEl) vEl.innerText = displayPrice;
+            if(lEl) lEl.innerText = displayLabel;
         });
     }
 
@@ -404,15 +425,18 @@
             else if (code.startsWith('hk')) { name=p[1]; price=p[6]; lastClose=p[3]; }
             else if (code.startsWith('gb_')) { name=p[0]; price=p[1]; lastClose=p[26]; }
             else { name=p[0]; price=p[3]; lastClose=p[2]; }
+            
             const curP = parseFloat(price), lastP = parseFloat(lastClose);
             const isUp = curP >= lastP;
-            const pct = ((curP - lastP)/lastP*100).toFixed(2);
+            const pct = lastP ? ((curP - lastP)/lastP*100).toFixed(2) : '0.00';
+            
             let profitHtml = '';
             const hold = appData.holdings[code];
             if(hold && hold.cost) {
-                const profit = (curP - hold.cost) * hold.count;
+                const profit = (curP - hold.cost) * (hold.count || 0);
                 profitHtml = `<span class="profit-tag" style="color:${profit>=0?'var(--up)':'var(--down)'}">盈亏: ${profit>=0?'+':''}${profit.toFixed(2)}</span>`;
             }
+
             const item = document.createElement('div');
             item.className = 'stock-item';
             item.onclick = () => openModal(code, name);
@@ -454,15 +478,21 @@
     function addNewStock() {
         let code = document.getElementById('new-code').value.trim().toLowerCase();
         if(!code) return;
-        if(!isNaN(code)) code = (code.startsWith('6')||code.startsWith('9')) ? 'sh'+code : (code.length===5?'hk'+code:'sz'+code);
+        if(!isNaN(code)) {
+            if (code.length === 6) {
+                code = (code.startsWith('6')||code.startsWith('9')) ? 'sh'+code : 'sz'+code;
+            } else if (code.length === 5) {
+                code = 'hk'+code;
+            }
+        }
         if(!appData.codes.includes(code)) { appData.codes.push(code); save(); refresh(); }
         document.getElementById('new-code').value = '';
     }
     function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(appData)); }
 
+    // 初始化运行
     refresh();
     setInterval(refresh, 10000);
-    // 时钟秒级更新（UI流畅度）
     setInterval(updateWorldClocks, 60000);
 </script>
 </body>
