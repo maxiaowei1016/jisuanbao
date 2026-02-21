@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemini 金融工具箱 - 旗舰部署版</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root { --primary: #007aff; --success: #34c759; --danger: #ff3b30; --gold: #d4af37; --bg: #f2f2f7; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); display: flex; justify-content: center; padding: 10px; margin: 0; }
+        .card { width: 100%; max-width: 600px; background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.08); }
+        .nav { display: flex; overflow-x: auto; gap: 8px; margin-bottom: 20px; padding-bottom: 8px; border-bottom: 1px solid #e5e5ea; scrollbar-width: none; }
+        .nav button { padding: 8px 18px; border: none; background: #e5e5ea; border-radius: 12px; cursor: pointer; white-space: nowrap; font-size: 13px; font-weight: 600; }
+        .nav button.active { background: var(--primary); color: white; }
+        .panel { display: none; }
+        .panel.active { display: block; animation: slideIn 0.3s ease; }
+        .group { margin-bottom: 15px; }
+        label { display: block; font-size: 12px; font-weight: bold; margin-bottom: 6px; color: #8e8e93; }
+        input, select { width: 100%; padding: 12px; border: 1px solid #d1d1d6; border-radius: 10px; box-sizing: border-box; font-size: 16px; }
+        button.run { width: 100%; padding: 15px; background: var(--primary); color: white; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+        .res { margin-top: 20px; padding: 15px; background: #f8f9ff; border-radius: 12px; border: 1px solid #eef0f7; font-size: 14px; line-height: 1.8; }
+        .bank-tag { display: inline-block; padding: 2px 8px; background: #eee; border-radius: 4px; font-size: 11px; margin-right: 5px; cursor: pointer; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <div class="nav">
+        <button class="active" onclick="tab('savings')">储蓄利率</button>
+        <button onclick="tab('invest')">投资定投</button>
+        <button onclick="tab('stock')">股票美股</button>
+        <button onclick="tab('sh')">上海社保</button>
+        <button onclick="tab('loan')">房贷公积金</button>
+    </div>
+
+    <div id="savings" class="panel active">
+        <div class="group"><label>本金 (元)</label><input type="number" id="sav_p" value="100000" onchange="save(this)"></div>
+        <div class="group">
+            <label>快速填入年利率 (%)</label>
+            <span class="bank-tag" onclick="setRate(1.25)">国有大行(1.25%)</span>
+            <span class="bank-tag" onclick="setRate(1.85)">股份行(1.85%)</span>
+            <span class="bank-tag" onclick="setRate(2.3)">城商行(2.3%)</span>
+        </div>
+        <div class="group"><label>自定义年利率 (%)</label><input type="number" id="sav_r" value="1.25" step="0.05" onchange="save(this)"></div>
+        <div class="group"><label>期限 (年)</label><input type="number" id="sav_y" value="3" onchange="save(this)"></div>
+        <button class="run" onclick="calcSavings()">计算到期利息</button>
+        <div id="res_sav" class="res"></div>
+    </div>
+
+    <div id="invest" class="panel">
+        <div class="group"><label>每月定投 (元)</label><input type="number" id="i_m" value="2000" onchange="save(this)"></div>
+        <div class="group"><label>预期年化 (%)</label><input type="number" id="i_r" value="8" onchange="save(this)"></div>
+        <div class="group"><label>年限</label><input type="number" id="i_y" value="10" onchange="save(this)"></div>
+        <button class="run" onclick="calcInvest()">财富增长测算</button>
+        <canvas id="investChart"></canvas>
+        <div id="res_i" class="res"></div>
+    </div>
+
+    <div id="stock" class="panel">
+        <div class="group">
+            <label>市场</label>
+            <select id="s_t" onchange="save(this)"><option value="A">A股</option><option value="US">美股</option></select>
+        </div>
+        <div class="group"><label>买入价</label><input type="number" id="s_p" value="10" onchange="save(this)"></div>
+        <div class="group"><label>数量</label><input type="number" id="s_n" value="1000" onchange="save(this)"></div>
+        <button class="run" onclick="calcStock()">计算保本价</button>
+        <div id="res_s" class="res"></div>
+    </div>
+
+    <div id="sh" class="panel">
+        <div class="group"><label>上海税前月薪</label><input type="number" id="sh_s" value="15000" onchange="save(this)"></div>
+        <button class="run" onclick="calcSH()">计算到手工资</button>
+        <hr style="border:0.5px solid #eee; margin:20px 0;">
+        <div class="group"><label>实物金买入价/现价</label>
+            <input type="number" id="g_b" placeholder="买入单价" onchange="save(this)">
+            <input type="number" id="g_n" placeholder="当前金价" value="550" style="margin-top:10px">
+        </div>
+        <button class="run" style="background:var(--gold)" onclick="calcGold()">黄金盈亏测算</button>
+        <div id="res_mix" class="res"></div>
+    </div>
+
+    <div id="loan" class="panel">
+        <div class="group"><label>贷款金额 (万)</label><input type="number" id="l_p" value="100" onchange="save(this)"></div>
+        <div class="group"><label>年利率 (%)</label><input type="number" id="l_r" value="3.1" onchange="save(this)"></div>
+        <button class="run" onclick="calcLoan()">等额本息月供</button>
+        <div id="res_l" class="res"></div>
+    </div>
+</div>
+
+<script>
+    function tab(id) {
+        document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        event.currentTarget.classList.add('active');
+    }
+
+    // 本地记忆
+    function save(el) { localStorage.setItem(el.id, el.value); }
+    window.onload = () => {
+        document.querySelectorAll('input, select').forEach(el => {
+            if(localStorage.getItem(el.id)) el.value = localStorage.getItem(el.id);
+        });
+    };
+
+    // 储蓄计算
+    function setRate(r) { document.getElementById('sav_r').value = r; }
+    function calcSavings() {
+        const p = document.getElementById('sav_p').value, r = document.getElementById('sav_r').value / 100, y = document.getElementById('sav_y').value;
+        const interest = p * r * y;
+        document.getElementById('res_sav').innerHTML = `到期利息: <b style="color:var(--success)">￥${interest.toLocaleString()}</b><br>到期本息合计: ￥${(parseFloat(p) + interest).toLocaleString()}`;
+    }
+
+    // 定投计算与图表
+    let chart = null;
+    function calcInvest() {
+        const m = parseFloat(document.getElementById('i_m').value), r = document.getElementById('i_r').value/1200, n = document.getElementById('i_y').value * 12;
+        let total = 0, pts = [], prin = [];
+        for(let i=1; i<=n; i++) {
+            total = (total + m) * (1 + r);
+            if(i%12===0) { pts.push(total.toFixed(0)); prin.push(m*i); }
+        }
+        document.getElementById('res_i').innerHTML = `最终市值: <b style="color:var(--primary)">￥${total.toLocaleString(undefined,{maximumFractionDigits:0})}</b><br>累计投入: ￥${(m*n).toLocaleString()}`;
+        
+        const ctx = document.getElementById('investChart').getContext('2d');
+        if(chart) chart.destroy();
+        chart = new Chart(ctx, {
+            type: 'line',
+            data: { labels: Array.from({length: pts.length}, (_,i)=>i+1+'年'), datasets: [{label:'预期市值',data:pts,borderColor:'#007aff',fill:true},{label:'本金',data:prin,borderColor:'#8e8e93',borderDash:[5,5]}] }
+        });
+    }
+
+    // 股票计算
+    function calcStock() {
+        const type = document.getElementById('s_t').value, p = parseFloat(document.getElementById('s_p').value), n = document.getElementById('s_n').value;
+        let fee = 0, bk = 0;
+        if(type==='A') {
+            const cost = p * n;
+            fee = Math.max(5, cost * 0.00025);
+            bk = (cost + fee*2 + cost*0.0005) / n;
+        } else {
+            fee = Math.max(1, n * 0.005);
+            bk = (p * n + fee*2) / n;
+        }
+        document.getElementById('res_s').innerHTML = `<b style="color:var(--danger)">保本卖出价: ${bk.toFixed(3)}</b><br>预估买入税费: ${fee.toFixed(2)}`;
+    }
+
+    // 上海社保
+    function calcSH() {
+        const s = document.getElementById('sh_s').value, base = Math.min(Math.max(s, 7384), 36921);
+        const social = base * 0.105 + s * 0.07;
+        const tax = Math.max(0, (s - social - 5000) * 0.03);
+        document.getElementById('res_mix').innerHTML = `上海税后到手: <b style="color:var(--success)">￥${(s-social-tax).toFixed(2)}</b>`;
+    }
+
+    function calcGold() {
+        const diff = (document.getElementById('g_n').value - document.getElementById('g_b').value);
+        document.getElementById('res_mix').innerHTML = `金价每克盈亏: <b style="color:${diff>=0?'var(--danger)':'var(--success)'}">￥${diff.toFixed(2)}</b>`;
+    }
+
+    // 房贷
+    function calcLoan() {
+        const p = document.getElementById('l_p').value * 10000, r = document.getElementById('l_r').value/1200, n = 360;
+        const m = (p * r * Math.pow(1+r, n)) / (Math.pow(1+r, n) - 1);
+        document.getElementById('res_l').innerHTML = `30年等额本息月供: <b>￥${m.toFixed(2)}</b>`;
+    }
+</script>
+</body>
+</html>
